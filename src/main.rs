@@ -26,6 +26,28 @@ fn leer(mensaje: &str) -> String {
     texto.trim().to_string()
 }
 
+fn leer_numero(mensaje: &str, min: u8, max: u8) -> u8 {
+    loop {
+        let texto = leer(mensaje);
+        match texto.parse::<u8>() {
+            Ok(numero) if numero >= min && numero <= max => return numero,
+            Ok(_) => println!("El número debe estar entre {} y {}.", min, max),
+            Err(_) => println!("Eso no es un número válido. Intenta de nuevo."),
+        }
+    }
+}
+
+fn leer_si_no(mensaje: &str) -> bool {
+    loop {
+        let texto = leer(mensaje).to_lowercase();
+        match texto.as_str() {
+            "s" => return true,
+            "n" => return false,
+            _ => println!("Por favor responde 's' o 'n'."),
+        }
+    }
+}
+
 fn main() {
     let db = Database::open_path("inventario.db").expect("No se pudo abrir la base de datos");
     println!("=== INVENTARIO DE INSTRUMENTOS ===");
@@ -57,17 +79,14 @@ fn agregar_instrumento(db: &Database) {
     let opcion = leer("Seleccione: ");
     let tipo = match opcion.as_str() {
         "1" => {
-            let cantidad = leer("Cantidad de cuerdas: ");
-            let cantidad = cantidad.parse::<u8>().unwrap_or(6);
+            let cantidad = leer_numero("Cantidad de cuerdas: ", 1, 12);
             TipoInstrumento::Cuerdas {
                 cantidad_cuerdas: cantidad,
             }
         }
         "2" => {
-            let respuesta = leer("¿Es digital? (s/n): ");
-            TipoInstrumento::Teclado {
-                digital: respuesta.to_lowercase() == "s",
-            }
+            let digital = leer_si_no("¿Es digital? (s/n): ");
+            TipoInstrumento::Teclado { digital }
         }
         _ => {
             println!("Tipo inválido.");
@@ -116,4 +135,3 @@ fn ver_instrumentos(db: &Database) {
         println!("No hay instrumentos registrados.");
     }
 }
-

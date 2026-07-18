@@ -1,0 +1,8 @@
+[package]
+name = "inventario_nsql"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+polodb_core = "5.1.4"
+serde = { version = "1.0", features = ["derive"] }

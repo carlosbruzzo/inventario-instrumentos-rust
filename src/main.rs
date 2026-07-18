@@ -56,13 +56,15 @@ fn main() {
         println!("1 - Agregar instrumento");
         println!("2 - Ver instrumentos");
         println!("3 - Buscar por nombre o marca");
-        println!("4 - Salir");
+        println!("4 - Borrar instrumento");
+        println!("5 - Salir");
         let opcion = leer("Opción: ");
         match opcion.as_str() {
             "1" => agregar_instrumento(&db),
             "2" => ver_instrumentos(&db),
             "3" => buscar_instrumento(&db),
-            "4" => {
+            "4" => borrar_instrumento(&db),
+            "5" => {
                 println!("Programa finalizado.");
                 break;
             }
@@ -186,5 +188,35 @@ fn buscar_instrumento(db: &Database) {
 
     if encontrados == 0 {
         println!("No se encontraron coincidencias.");
+    }
+}
+fn borrar_instrumento(db: &Database) {
+    let coleccion = db.collection::<Document>("instrumentos");
+    let nombre = leer("Nombre exacto del instrumento a borrar: ");
+
+    let filtro = doc! { "nombre": nombre.clone() };
+
+    // Primero mostramos qué se va a borrar, para confirmar
+    let encontrado = coleccion.find_one(filtro.clone()).expect("Error al buscar");
+
+    match encontrado {
+        Some(documento) => {
+            let instrumento: Instrumento =
+                from_document(documento).expect("Error convirtiendo documento");
+            println!(
+                "Encontrado: {} | Marca: {}",
+                instrumento.nombre, instrumento.marca
+            );
+            let confirmar = leer_si_no("¿Confirmás que querés borrarlo? (s/n): ");
+            if confirmar {
+                coleccion.delete_one(filtro).expect("Error al borrar");
+                println!("Instrumento borrado.");
+            } else {
+                println!("Operación cancelada.");
+            }
+        }
+        None => {
+            println!("No se encontró ningún instrumento con ese nombre exacto.");
+        }
     }
 }

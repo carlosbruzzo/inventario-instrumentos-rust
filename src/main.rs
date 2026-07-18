@@ -1,6 +1,6 @@
 use polodb_core::{
     CollectionT, Database,
-    bson::{Document, doc, from_document, to_document},
+    bson::{self, Document, doc, from_document, to_document},
 };
 use serde::{Deserialize, Serialize};
 use std::io::{self, Write};
@@ -55,12 +55,14 @@ fn main() {
         println!();
         println!("1 - Agregar instrumento");
         println!("2 - Ver instrumentos");
-        println!("3 - Salir");
+        println!("3 - Buscar por nombre o marca");
+        println!("4 - Salir");
         let opcion = leer("Opción: ");
         match opcion.as_str() {
             "1" => agregar_instrumento(&db),
             "2" => ver_instrumentos(&db),
-            "3" => {
+            "3" => buscar_instrumento(&db),
+            "4" => {
                 println!("Programa finalizado.");
                 break;
             }
@@ -133,5 +135,56 @@ fn ver_instrumentos(db: &Database) {
     }
     if encontrados == 0 {
         println!("No hay instrumentos registrados.");
+    }
+}
+
+fn buscar_instrumento(db: &Database) {
+    let coleccion = db.collection::<Document>("instrumentos");
+    let texto = leer("Buscar (nombre o marca): ");
+
+    let patron = bson::Regex {
+        pattern: texto,
+        options: "i".to_string(), // "i" = case-insensitive
+    };
+
+    let filtro = doc! {
+        "$or": [
+            { "nombre": { "$regex": patron.clone() } },
+            { "marca": { "$regex": patron } },
+        ]
+    };
+
+    println!();
+    println!("=== RESULTADOS ===");
+    let mut cursor = coleccion.find(filtro).run().expect("Error al consultar");
+    let mut encontrados = 0;
+
+    while let Some(resultado) = cursor.next() {
+        let documento = resultado.expect("Error leyendo documento");
+        let instrumento: Instrumento =
+            from_document(documento).expect("Error convirtiendo documento");
+        encontrados += 1;
+
+        let detalle = match instrumento.tipo {
+            TipoInstrumento::Cuerdas { cantidad_cuerdas } => {
+                format!("Cuerdas ({} cuerdas)", cantidad_cuerdas)
+            }
+            TipoInstrumento::Teclado { digital } => {
+                if digital {
+                    "Teclado Digital".to_string()
+                } else {
+                    "Teclado Acústico".to_string()
+                }
+            }
+        };
+
+        println!(
+            "{} | Marca: {} | {}",
+            instrumento.nombre, instrumento.marca, detalle
+        );
+    }
+
+    if encontrados == 0 {
+        println!("No se encontraron coincidencias.");
     }
 }

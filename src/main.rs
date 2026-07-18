@@ -9,6 +9,8 @@ use std::io::{self, Write};
 enum TipoInstrumento {
     Cuerdas { cantidad_cuerdas: u8 },
     Teclado { digital: bool },
+    Viento { material: String },
+    Percusion { con_parche: bool },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -80,6 +82,9 @@ fn agregar_instrumento(db: &Database) {
     println!("Tipo:");
     println!("1 - Cuerdas");
     println!("2 - Teclado");
+    println!("3 - Viento");
+    println!("4 - Percusión");
+
     let opcion = leer("Seleccione: ");
     let tipo = match opcion.as_str() {
         "1" => {
@@ -91,6 +96,14 @@ fn agregar_instrumento(db: &Database) {
         "2" => {
             let digital = leer_si_no("¿Es digital? (s/n): ");
             TipoInstrumento::Teclado { digital }
+        }
+        "3" => {
+            let material = leer("Material (madera/metal/etc.): ");
+            TipoInstrumento::Viento { material }
+        }
+        "4" => {
+            let con_parche = leer_si_no("¿Tiene parche? (s/n): ");
+            TipoInstrumento::Percusion { con_parche }
         }
         _ => {
             println!("Tipo inválido.");
@@ -127,6 +140,16 @@ fn ver_instrumentos(db: &Database) {
                     "Teclado Digital".to_string()
                 } else {
                     "Teclado Acústico".to_string()
+                }
+            }
+            TipoInstrumento::Viento { material } => {
+                format!("Viento ({})", material)
+            }
+            TipoInstrumento::Percusion { con_parche } => {
+                if con_parche {
+                    "Percusión (con parche)".to_string()
+                } else {
+                    "Percusión (sin parche)".to_string()
                 }
             }
         };
@@ -176,6 +199,16 @@ fn buscar_instrumento(db: &Database) {
                     "Teclado Digital".to_string()
                 } else {
                     "Teclado Acústico".to_string()
+                }
+            }
+            TipoInstrumento::Viento { material } => {
+                format!("Viento ({})", material)
+            }
+            TipoInstrumento::Percusion { con_parche } => {
+                if con_parche {
+                    "Percusión (con parche)".to_string()
+                } else {
+                    "Percusión (sin parche)".to_string()
                 }
             }
         };
